@@ -22,9 +22,14 @@ class App extends Component {
                 ]
             },
             selected: {},
+            isPersisted:true
         }
 
         this.GraphView = React.createRef();
+    }
+
+    storeGraph = () => {
+        this.state.isPersisted && localStorage.setItem('graph',JSON.stringify(this.state.graph));
     }
 
     onSelectNode = (viewNode) => {
@@ -36,6 +41,7 @@ class App extends Component {
     }
 
     onUpdateNode = () => {
+        this.storeGraph();
     }
 
 
@@ -64,6 +70,7 @@ class App extends Component {
             });
         }
 
+        this.storeGraph();
     }
 
     onSwapEdge = () => {
@@ -108,6 +115,8 @@ class App extends Component {
 
         // eslint-disable-next-line no-unused-expressions
         y === undefined ?  this.handleCloseDialog() : null;
+
+        this.storeGraph();
     }
 
     handleGetAllPathFromSource = async() => {
@@ -222,10 +231,32 @@ class App extends Component {
         );
     }
 
+    handleGraphRestore = () => {
+        let graphState = JSON.parse(localStorage.getItem('graph'));
+        this.setState({
+            ...this.state,
+            graph:graphState,
+            isPersisted:true
+        })
+    }
+
+    handleGraphClear = () => {
+        const graphOut = {
+            nodes:[],
+            edges:[]
+        };
+
+        this.setState({
+            ...this.state,
+            graph:graphOut,
+            isPersisted:true
+        });
+    }
+
     render() {
         const {nodes, edges } = this.state.graph;
 
-        const { selected, openDialog } = this.state;
+        const { selected, openDialog, isPersisted } = this.state;
 
         const NodeTypes = graphConfig.GraphConfig.NodeTypes;
         const NodeSubtypes = graphConfig.GraphConfig.NodeSubtypes;
@@ -239,12 +270,21 @@ class App extends Component {
                         <h2>Juntrax DAG Graph</h2>
                     </div>
                     <div className="col-12">
-                        <Button className="m-2" variant="contained"  color="primary"  onClick={this.handleNodeDialog} >
+                        <Button className="m-2" variant="contained" onClick={this.handleNodeDialog} color="primary" disabled={!isPersisted && nodes.length }>
                             New Node
                         </Button>
                         <Button className="m-2" variant="contained" onClick={this.handleGetAllPathFromSource}
-                                color="primary">
+                                color="primary" disabled={!nodes.length || !isPersisted}>
                             Find All Paths
+                        </Button>
+
+                        <Button className="m-2" variant="contained" onClick={this.handleGraphRestore}
+                                color="primary" disabled={ isPersisted && nodes.length }>
+                            Back
+                        </Button>
+                        <Button className="m-2" variant="contained" onClick={this.handleGraphClear}
+                                color="primary" disabled={!nodes.length}>
+                            clear
                         </Button>
                     </div>
                     <div className="col-12 height-70">
