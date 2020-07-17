@@ -42,10 +42,26 @@ class App extends Component {
     }
 
     onSelectEdge = (viewEdge) => {
-
+        this.setState({ selected: viewEdge });
     }
 
     onCreateEdge = (sourceViewNode, targetViewNode) => {
+        console.log("onCreateE");
+        const graph = this.state.graph;
+        const viewEdge = {
+            source: sourceViewNode[graphConfig.NODE_KEY],
+            target: targetViewNode[graphConfig.NODE_KEY],
+            type:"emptyEdge",
+        };
+
+        // Only add the edge when the source node is not the same as the target
+        if (viewEdge.source !== viewEdge.target) {
+            graph.edges = [...graph.edges, viewEdge];
+            this.setState({
+                graph,
+                selected: viewEdge,
+            });
+        }
 
     }
 
