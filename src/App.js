@@ -45,7 +45,19 @@ class App extends Component {
     }
 
 
-    onDeleteNode = () => {
+    onDeleteNode = (viewNode, nodeId, nodeArr) => {
+        const graph = this.state.graph;
+        // Delete any connected edges
+        const newEdges = graph.edges.filter((edge, i) => {
+            return (
+                edge.source !== viewNode[graphConfig.NODE_KEY] && edge.target !== viewNode[graphConfig.NODE_KEY]
+            );
+        });
+
+        graph.nodes = nodeArr;
+        graph.edges = newEdges;
+
+        this.setState({ graph, selected: null });
     }
 
     onSelectEdge = (viewEdge) => {
@@ -77,8 +89,14 @@ class App extends Component {
 
     }
 
-    onDeleteEdge = () => {
+    onDeleteEdge = (viewEdge, edges) => {
+        const graph = this.state.graph;
 
+        graph.edges = edges;
+        this.setState({
+            graph,
+            selected: null,
+        });
     }
 
     handleNodeDialog = () => {
