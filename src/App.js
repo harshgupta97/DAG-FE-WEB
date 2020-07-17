@@ -3,6 +3,7 @@ import './App.css';
 import {Button, Dialog,TextField} from "@material-ui/core";
 import GraphComponent from "./components/common/GraphComponent";
 import graphConfig from "./config/graph";
+import GraphServices from "./services/GraphServices";
 
 class App extends Component {
 
@@ -109,6 +110,118 @@ class App extends Component {
         y === undefined ?  this.handleCloseDialog() : null;
     }
 
+    handleGetAllPathFromSource = async() => {
+
+        let graphServices = new GraphServices();
+        const graph = this.prepareGraph();
+        let sourceNode;
+        if(this.state.selected !== null && this.state.selected.id !== undefined){
+            sourceNode = this.state.selected.id
+        }else{
+            alert("please select a node to get all its possible paths") ;
+            return;
+        }
+        try{
+
+            let response = await graphServices.getAllPath(graph, sourceNode);
+            this.setState({
+                ...this.state,
+                isPersisted:false
+            })
+            this.handleOutGraph(response.data);
+        }catch (e){
+            console.error(e)
+        }
+
+
+    }
+
+    prepareGraph = () => {
+        let {graph} =  this.state;
+        let adjacencyList = new Map();
+        graph.nodes.forEach(node => {
+            adjacencyList.set(node.id, []);
+            graph.edges.forEach(edge => {
+                if(edge.source === node.id){
+                    adjacencyList.get(node.id).push(edge.target);
+                }
+            })
+        });
+
+        return Array.from(adjacencyList,([name, value]) => ({ [name]:value }));
+    }
+
+    handleOutGraph = (paths) => {
+        let nodes = new Set();
+        let edges = [];
+
+
+        paths.forEach( (path, PathIndex) => {
+            path.forEach((node, nodeIndex) => {
+                if(path[nodeIndex+1] !== undefined)
+                    edges.push([node,path[nodeIndex+1]]);
+                nodes.add(node);
+            })
+        });
+
+        edges = this.getUniquePath(edges);
+        this.addOutNodesEdges(nodes,edges);
+    }
+
+    getUniquePath = (allPaths) => {
+        var uniques = [];
+        var pathFound = {};
+        for(var i = 0, l = allPaths.length; i < l; i++) {
+            var stringified = JSON.stringify(allPaths[i]);
+            if(pathFound[stringified]) { continue; }
+            uniques.push(allPaths[i]);
+            pathFound[stringified] = true;
+        }
+        return uniques;
+    }
+
+    addOutNodesEdges = (nodes,edges) =>{
+        const graphOut = {
+            nodes:[],
+            edges:[]
+        };
+        nodes.forEach(node => {
+            graphOut.nodes = [
+                {
+                    id: node,
+                    title: `Node ${node}`,
+                    x: 300+ Math.floor(Math.random() * 10 * node),
+                    y: 150 +Math.floor(Math.random() * 50 * node ),
+                    type: "empty"
+                },...graphOut.nodes
+            ]
+        });
+
+
+        let viewEdge = null;
+        edges.forEach(edge =>{
+            const sourceViewNode = edge[0];
+            const targetViewNode = edge[1];
+
+            viewEdge = {
+                source: sourceViewNode,
+                target: targetViewNode,
+                type:"emptyEdge",
+            };
+
+            if (viewEdge.source !== viewEdge.target) {
+                graphOut.edges= [viewEdge,...graphOut.edges];
+            }
+        });
+
+
+        this.setState({
+                ...this.state,
+                graph:graphOut
+            }
+        );
+    }
+
     render() {
         const {nodes, edges } = this.state.graph;
 
@@ -128,6 +241,10 @@ class App extends Component {
                     <div className="col-12">
                         <Button className="m-2" variant="contained"  color="primary"  onClick={this.handleNodeDialog} >
                             New Node
+                        </Button>
+                        <Button className="m-2" variant="contained" onClick={this.handleGetAllPathFromSource}
+                                color="primary">
+                            Find All Paths
                         </Button>
                     </div>
                     <div className="col-12 height-70">
