@@ -65,7 +65,6 @@ class App extends Component {
     }
 
     onCreateEdge = (sourceViewNode, targetViewNode) => {
-        console.log("onCreateE");
         const graph = this.state.graph;
         const viewEdge = {
             source: sourceViewNode[graphConfig.NODE_KEY],
@@ -113,13 +112,22 @@ class App extends Component {
         });
     }
 
+    handleNodeLabel = (event) => {
+        const newLabel = event.target.value;
+        this.setState({
+            ...this.state,
+            nodeLabel:newLabel
+        })
+    }
+
     handleNewNode = (x, y) => {
-        const graph = this.state.graph;
+        const {graph, nodeLabel} = this.state;
+
 
         graph.nodes = [{
             id: graph.nodes.length + 1,
-            title: `Node ${graph.nodes.length + 1}`,
-            x: x? x : 10,
+            title: nodeLabel === undefined ? `Node ${graph.nodes.length + 1}` : nodeLabel,
+            x: y? x : 10,
             y: y? y : 10,
             type: "empty"
         },...graph.nodes];
@@ -175,7 +183,7 @@ class App extends Component {
             })
         });
 
-        return Array.from(adjacencyList,([name, value]) => ({ [name]:value }));
+        return Object.fromEntries(adjacencyList);
     }
 
     handleOutGraph = (paths) => {
